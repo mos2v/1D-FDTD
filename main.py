@@ -40,7 +40,15 @@ omega0 = 2 * np.pi * c0 / center_wavelength
 pulse_width = 20e-15
 pulse_delay = 4 * pulse_width
 
-time = np.linspace(0, simulation_time)
+time = np.linspace(0, simulation_time, N_time_steps)
+pulse = signal(time, pulse_width, pulse_delay, omega0)
+# plt.plot(time, pulse)
+# plt.show()
+
+
+j_source = N_space_cells // 2
+t_offset = refractive_index[j_source] * step_size / (2 * c0)
+Z = imp0 / refractive_index[j_source]
 
 
 for n in range(N_time_steps):
@@ -52,7 +60,11 @@ for n in range(N_time_steps):
     #     Hz[j] = Hz_prev[j] + h_coeff * (Ex[j+1] - Ex[j])
 
     Hz[:N_space_cells-1] = Hz_prev[:N_space_cells-1] + h_coeff * (Ex[1:] - Ex[:N_space_cells-1])
+
+    
     #Hz = [Hz_prev[j] + dt / (mu0 + step_size) * (Ex[j+1] - Ex[j]) for j in range(0, N_space_cells - 1)]    
+    Hz[j_source-1] = Hz[j_source-1] - signal((n + .5) * dt - t_offset, pulse_delay, pulse_width, omega0) / Z
+
 
     # for j in range(1, N_space_cells - 1):
     #     Ex[j] = Ex_prev[j] +  e_coeff[j] * (Hz[j] - Hz[j - 1])
@@ -60,6 +72,9 @@ for n in range(N_time_steps):
     Ex[1:N_space_cells-1] = Ex_prev[1:N_space_cells-1] +  e_coeff[1:N_space_cells-1] * (Hz[1:N_space_cells-1] - Hz[:N_space_cells - 2])
 
     #Ex = [Ex_prev[j] + dt / (eps0 * eps[j] * step_size) * (Hz[j] - Hz[j - 1]) for j in range(1, N_space_cells - 1)]  
+
+    Ex[j_source] = Ex[j_source] * signal((n + 1) * dt, pulse_width, pulse_delay, omega0)
+
 
     Ex[0] = Ex_prev[1] + a * (Ex[1] - Ex_prev[0])
     Ex[-1] = Ex_prev[-2] + a_ * (Ex[-2] - Ex_prev[-1])
