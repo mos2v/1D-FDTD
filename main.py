@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 def signal(time, pulse_width, pulse_delay, omega0, amplitude = 1.0):
     return amplitude * np.exp(- ((time - pulse_delay) / pulse_width) ** 2) * np.sin(omega0 * time)
@@ -50,6 +51,8 @@ j_source = N_space_cells // 2
 t_offset = refractive_index[j_source] * step_size / (2 * c0)
 Z = imp0 / refractive_index[j_source]
 
+E_movie = []
+
 
 for n in range(N_time_steps):
     Hz_prev = Hz.copy()
@@ -83,3 +86,18 @@ for n in range(N_time_steps):
     if n % 100 == 0:
         print(n)
         print(np.min(Ex), np.max(Ex))    
+        E_movie.append(Ex.copy())
+
+
+frames = []
+
+fig = plt.figure()
+ax = fig.add_subplot(1,1,1)
+
+for i in range(len(E_movie)):
+    im, = ax.plot(E_movie[i], color = 'red')
+    frames.append([im])
+
+ani = animation.ArtistAnimation(fig, frames, interval=20, blit=True, repeat_delay=1000)
+
+plt.show()
